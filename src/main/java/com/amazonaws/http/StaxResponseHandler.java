@@ -17,6 +17,7 @@ package com.amazonaws.http;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -48,7 +49,9 @@ public class StaxResponseHandler<T> implements HttpResponseHandler<AmazonWebServ
     private static final Log log = LogFactory.getLog("com.amazonaws.request");
 
     /** Shared factory for creating XML event readers */
-    private static final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+    private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+    
+    private static final AtomicLong xmlEventsCounter = new AtomicLong(0);
 
 
     /**
@@ -86,6 +89,9 @@ public class StaxResponseHandler<T> implements HttpResponseHandler<AmazonWebServ
 
         XMLEventReader eventReader;
         synchronized (xmlInputFactory) {
+            if(xmlEventsCounter.incrementAndGet() % 63999 == 0) {
+              xmlInputFactory = XMLInputFactory.newInstance();
+            }
             eventReader = xmlInputFactory.createXMLEventReader(content);
         }
 
